@@ -1,0 +1,35 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-1b5e04846b7d69cd02e96524f99690ff35f4f65d",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "userSourceNameMap": {
+    "contracts/FHECounter.sol": "project/contracts/FHECounter.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers",
+            "metadata"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/FHECounter.sol": {
+        "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.28;\r\n\r\n/**\r\n * @title FHECounter\r\n * @dev A simple counter contract simulating FHE operations (for Sepolia testnet)\r\n * This contract demonstrates the interface for FHE operations without requiring FHEVM\r\n */\r\ncontract FHECounter {\r\n    // Counter value (stored as regular uint32 for compatibility)\r\n    uint32 private _counter;\r\n    \r\n    // Track the number of operations\r\n    uint256 public operationCount;\r\n    \r\n    // Track handles for demonstration\r\n    mapping(bytes32 => uint32) private _handles;\r\n    uint256 private _nextHandleId = 1;\r\n    bytes32 private _currentHandle;\r\n    \r\n    // Events\r\n    event CounterIncremented(address indexed user, bytes32 handle);\r\n    event CounterDecremented(address indexed user, bytes32 handle);\r\n    event CounterInitialized(bytes32 handle);\r\n    \r\n    constructor() {\r\n        // Initialize counter to 0\r\n        _counter = 0;\r\n        _currentHandle = bytes32(_nextHandleId++);\r\n        _handles[_currentHandle] = _counter;\r\n        operationCount = 0;\r\n        \r\n        emit CounterInitialized(_currentHandle);\r\n    }\r\n    \r\n    /**\r\n     * @dev Increment the counter by an encrypted value\r\n     * @param inputEuint32 Encrypted 32-bit integer input (handle)\r\n     * @param inputProof Proof for the encrypted input (ignored in simulation)\r\n     */\r\n    function increment(bytes32 inputEuint32, bytes calldata inputProof) public {\r\n        // Simulate: extract value from handle (in real FHE this would be encrypted)\r\n        uint32 amount = uint32(uint256(inputEuint32));\r\n        if (amount == 0) amount = 1; // Default increment\r\n        \r\n        // Simulate encrypted addition\r\n        _counter += amount;\r\n        \r\n        // Create new handle for result\r\n        bytes32 newHandle = bytes32(_nextHandleId++);\r\n        _handles[newHandle] = _counter;\r\n        _currentHandle = newHandle;\r\n        \r\n        // Increment operation count\r\n        operationCount++;\r\n        \r\n        emit CounterIncremented(msg.sender, newHandle);\r\n    }\r\n    \r\n    /**\r\n     * @dev Decrement the counter by an encrypted value\r\n     * @param inputEuint32 Encrypted 32-bit integer input (handle)\r\n     * @param inputProof Proof for the encrypted input (ignored in simulation)\r\n     */\r\n    function decrement(bytes32 inputEuint32, bytes calldata inputProof) public {\r\n        // Simulate: extract value from handle\r\n        uint32 amount = uint32(uint256(inputEuint32));\r\n        if (amount == 0) amount = 1; // Default decrement\r\n        \r\n        // Simulate encrypted subtraction with underflow protection\r\n        if (_counter >= amount) {\r\n            _counter -= amount;\r\n        } else {\r\n            _counter = 0;\r\n        }\r\n        \r\n        // Create new handle for result\r\n        bytes32 newHandle = bytes32(_nextHandleId++);\r\n        _handles[newHandle] = _counter;\r\n        _currentHandle = newHandle;\r\n        \r\n        // Increment operation count\r\n        operationCount++;\r\n        \r\n        emit CounterDecremented(msg.sender, newHandle);\r\n    }\r\n    \r\n    /**\r\n     * @dev Get the encrypted counter value\r\n     * @return The encrypted counter as bytes32 handle\r\n     */\r\n    function getCount() public view returns (bytes32) {\r\n        return _currentHandle;\r\n    }\r\n    \r\n    /**\r\n     * @dev Get the decrypted counter value (for testing)\r\n     * @return The current counter value\r\n     */\r\n    function getDecryptedCount() public view returns (uint32) {\r\n        return _counter;\r\n    }\r\n    \r\n    /**\r\n     * @dev Mock decrypt function for handle\r\n     * @param handle The handle to decrypt\r\n     * @return The decrypted value\r\n     */\r\n    function mockDecrypt(bytes32 handle) public view returns (uint32) {\r\n        return _handles[handle];\r\n    }\r\n    \r\n    /**\r\n     * @dev Get the total number of operations performed\r\n     */\r\n    function getOperationCount() public view returns (uint256) {\r\n        return operationCount;\r\n    }\r\n    \r\n    /**\r\n     * @dev Reset the counter to zero\r\n     */\r\n    function reset() public {\r\n        _counter = 0;\r\n        bytes32 newHandle = bytes32(_nextHandleId++);\r\n        _handles[newHandle] = _counter;\r\n        _currentHandle = newHandle;\r\n        operationCount++;\r\n        \r\n        emit CounterInitialized(newHandle);\r\n    }\r\n    \r\n    /**\r\n     * @dev Add two encrypted values (simulation)\r\n     * @param a First encrypted value\r\n     * @param b Second encrypted value \r\n     * @param proofA Proof for first value (ignored)\r\n     * @param proofB Proof for second value (ignored)\r\n     * @return The handle of the result\r\n     */\r\n    function addTwoEncryptedNumbers(\r\n        bytes32 a,\r\n        bytes32 b,\r\n        bytes calldata proofA,\r\n        bytes calldata proofB\r\n    ) public pure returns (bytes32) {\r\n        uint32 valueA = uint32(uint256(a));\r\n        uint32 valueB = uint32(uint256(b));\r\n        uint32 result = valueA + valueB;\r\n        return bytes32(uint256(result));\r\n    }\r\n    \r\n    /**\r\n     * @dev Compare two encrypted values (simulation)\r\n     * @param a First encrypted value\r\n     * @param b Second encrypted value\r\n     * @param proofA Proof for first value (ignored)\r\n     * @param proofB Proof for second value (ignored)\r\n     * @return The handle of the boolean result (1 for true, 0 for false)\r\n     */\r\n    function compareEncryptedNumbers(\r\n        bytes32 a,\r\n        bytes32 b,\r\n        bytes calldata proofA,\r\n        bytes calldata proofB\r\n    ) public pure returns (bytes32) {\r\n        uint32 valueA = uint32(uint256(a));\r\n        uint32 valueB = uint32(uint256(b));\r\n        bool result = valueA >= valueB;\r\n        return bytes32(uint256(result ? 1 : 0));\r\n    }\r\n    \r\n    /**\r\n     * @dev Get current counter value for debugging\r\n     */\r\n    function getCurrentValue() public view returns (uint32) {\r\n        return _counter;\r\n    }\r\n}"
+      }
+    }
+  }
+}
